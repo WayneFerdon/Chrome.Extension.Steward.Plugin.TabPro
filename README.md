@@ -7,7 +7,7 @@
 >Download from Chrome web store | Chrome 网上应用店下载地址 | Chrome 線上應用程式商店下載地址
 <br>[Steward | 全能启动器 - Steward](https://chrome.google.com/webstore/detail/steward/jglmompgeddkbcdamdknmebaimldkkbl)
 <br>[Steward Plus | 全能启动器 - Steward Plus](https://chrome.google.com/webstore/detail/steward-plus/dnkhdiodfglfckibnfcjbgddcgjgkacd)
-2. Creat a new Plugin in Steward, then copy codes from [TabPro.js](https://raw.githubusercontent.com/wayneferdon/Chrome.Extension.Steward.Plugin.TabPro/main/TabPro.js) into the installed chrome extension.
+2. Creat a new plugin in Steward, then copy codes from [TabPro.js](https://raw.githubusercontent.com/wayneferdon/Chrome.Extension.Steward.Plugin.TabPro/main/TabPro.js) into the new plugin.
 <br>在Steward中新建一个插件，将[TabPro.js](https://raw.githubusercontent.com/wayneferdon/Chrome.Extension.Steward.Plugin.TabPro/main/TabPro.js)中的代码复制并覆盖粘贴到新的插件中
 <br>在Steward中新建一個插件，將[TabPro.js](https://raw.githubusercontent.com/wayneferdon/Chrome.Extension.Steward.Plugin.TabPro/main/TabPro.js)中的代碼複製並覆蓋粘貼到新的插件中
 >Page to creat new plugin | 新建插件页面 | 新建插件頁面：高级->插件编辑器->New Plugin
