@@ -1,7 +1,7 @@
 module.exports = function (steward) {
     const version = 1;
     const author = 'WayneFerdon';
-    const name = 'Tabs Pro';
+    const name = 'Tab Pro';
     const type = 'keyword';
     const icon = 'https://i.imgur.com/QcoukjA.png';
     const title = '管理标签页与窗口';
