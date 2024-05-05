@@ -252,7 +252,8 @@ module.exports = function (steward) {
     const PLUGIN_NAME = 'Tab Pro';
     const PLUGIN_TYPE = 'keyword';
     const PLUGIN_CATEGORY = 'browser';
-    const PLUGIN_ICON = 'https://i.imgur.com/QcoukjA.png';
+    // const PLUGIN_ICON = 'https://i.imgur.com/QcoukjA.png';
+    const PLUGIN_ICON = './iconfont/tab.svg';
     const DEFAULT_DETACH_RESULT = [
         {
             icon: PLUGIN_ICON,
