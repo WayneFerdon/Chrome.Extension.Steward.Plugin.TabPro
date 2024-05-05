@@ -18,6 +18,10 @@
 >Steward Plus | 全能启动器 - Steward Plus
 <br>chrome-extension://dnkhdiodfglfckibnfcjbgddcgjgkacd/options.html#/
 3.  Click "Test and Save" to save and active | 点击 "Test and Save" 保存并启用 | 點擊 "Test and Save" 保存並啟用
+
+PS. ChromeFlag.js can be installed using the same way, which is a updated version of [The out dated version from official plugin](https://github.com/Steward-launcher/steward-plugins/blob/master/plugins/chromeflags.js) | 修改自[已过期的官方版本](https://github.com/Steward-launcher/steward-plugins/blob/master/plugins/chromeflags.js)的已更新的ChromeFlag.js可用同样的方式进行安装 | 修改自[已過期的官方版本](https://github.com/Steward-launcher/steward-plugins/blob/master/plugins/chromeflags.js)的已更新ChromeFlag.js可用同樣的方式進行安裝
+
+
 <br><br>
 ## Tips
 >1. Customize trigger keys by changing texts between [TabPro.js: Line 2](https://github.com/wayneferdon/Chrome.Extension.Steward.Plugin.TabPro/blob/main/TabPro.js#L2) and [TabPro.js: Line 8](https://github.com/wayneferdon/Chrome.Extension.Steward.Plugin.TabPro/blob/main/TabPro.js#L8)
