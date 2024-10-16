@@ -1,34 +1,95 @@
 module.exports = function (steward) {
-    // ---------Keys of the plugin---------
+    //#region ---------Keys of the plugin---------
     const KEY_ATTACH = 'taba';
     const KEY_DETACH = 'tabd';
     const KEY_FOCUS = 'tabf';
+    const KEY_SELECT = 'tabh';
+    //#endregion ---------Keys of the plugin---------
 
-    // ---------Text of the plugin---------
+    //#region ---------Text of the plugin---------
     // before input
     const TITLE = '管理标签页与窗口';
-
     const TITLE_ATTACH = '合并标签页';
     const TITLE_DETACH = '移动标签页';
     const TITLE_FOCUS = '跳转到标签页';
+    const TITLE_SELECT = '选中标签页';
     const SUBTITLE_ATTACH = '合并标签页';
     const SUBTITLE_DETACH = '查找并移动一个标签页到指定的窗口';
     const SUBTITLE_FOCUS = '跳转到标签页';
+    const SUBTITLE_SELECT = '将标签页加入到选择中';
     // on query
     const UNKNOW_TAB_TITLE = '[未知标题新标签页或设置页面]'; // any
-
     const TITLE_NOTHING_TO_ATTACH = '当前只有一个窗口';
     const SUBTITLE_NOTHING_TO_ATTACH = '当前只有一个窗口';
     const TITLE_ATTACH_ALL = '合并所有标签页';
     const SUBTITLE_ATTACH_ALL = '将所有标签页合并到当前窗口';
     const SUBTITLE_ATTACH_WIN = '移动标签页到当前窗口';
     const SUBTITLE_ATTACH_TAB = '合并此窗口的所有标签页';
-
     const TITLE_DETACH_TO_NEW = '新窗口';
     const SUBTITLE_DETACH_TO_NEW = '移动到新窗口';
     const SUBTITLE_DETACH_TO = '移动到此窗口';
+    //#endregion ---------Text of the plugin---------
 
-    // -------Plugin Core Functions--------
+    //#region CONSTANTS
+    const VERSION = 1;
+    const AUTHOR = 'WayneFerdon';
+    const PLUGIN_NAME = 'Tab Pro';
+    const PLUGIN_TYPE = 'keyword';
+    const PLUGIN_CATEGORY = 'browser';
+    // const PLUGIN_ICON = 'https://i.imgur.com/QcoukjA.png';
+    const PLUGIN_ICON = './iconfont/tab.svg';
+    const COMMAND_ATTACH = {
+        key: KEY_ATTACH,
+        type: PLUGIN_TYPE,
+        title: TITLE_ATTACH,
+        subtitle: SUBTITLE_ATTACH,
+        icon: PLUGIN_ICON,
+        onEnter: onAttach,
+        onInput: asyncOnAttachInput,
+        default: [{
+            key: KEY_ATTACH,
+            icon: PLUGIN_ICON,
+            title: TITLE_ATTACH_ALL,
+            desc: SUBTITLE_ATTACH_ALL,
+            id: [],
+        }]
+    }
+    const COMMAND_DETACH = {
+        key: KEY_DETACH,
+        type: PLUGIN_TYPE,
+        title: TITLE_DETACH,
+        subtitle: SUBTITLE_DETACH,
+        icon: PLUGIN_ICON,
+        onEnter: onDetach,
+        onInput: asyncOnDetachInput,
+        default: [{
+            key: KEY_DETACH,
+            icon: PLUGIN_ICON,
+            title: TITLE_DETACH_TO_NEW,
+            desc: SUBTITLE_DETACH_TO_NEW
+        }]
+    }
+    const COMMAND_FOCUS = {
+        key: KEY_FOCUS,
+        type: PLUGIN_TYPE,
+        title: TITLE_FOCUS,
+        subtitle: SUBTITLE_FOCUS,
+        icon: PLUGIN_ICON,
+        onEnter: onFocus,
+        onInput: asyncOnFocusInput
+    }
+    const COMMAND_HIGHLIGHT = {
+        key: KEY_SELECT,
+        type: PLUGIN_TYPE,
+        title: TITLE_SELECT,
+        subtitle: SUBTITLE_SELECT,
+        icon: PLUGIN_ICON,
+        onEnter: onHighlight,
+        onInput: asyncOnHighlightInput
+    }
+    //#endregion CONSTANTS
+
+    //#region -------Plugin Core Functions--------
     function FormatData(list, command) {
         return list.map(item => {
             return {
@@ -41,6 +102,10 @@ module.exports = function (steward) {
                 raw: item
             }
         });
+    }
+
+    function MatchQuery(query) {
+        return (tab) => steward.util.matchText(query, `${tab.title}${tab.url}`);
     }
 
     /**
@@ -59,9 +124,13 @@ module.exports = function (steward) {
                 return memo;
             }, []);
         if (filter) tabs = tabs.filter(filter);
-        return tabs.filter(tab => {
-            return steward.util.matchText(query, `${tab.title}${tab.url}`);
-        });
+        return tabs.filter(MatchQuery(query));
+    }
+
+    async function asyncQueryTabInWindow(query, filter) {
+        let tabs = (await WindowsOnPromise(chrome.windows.getCurrent)).tabs;
+        if (filter) tabs = tabs.filter(filter);
+        return tabs.filter(MatchQuery(query));
     }
 
     async function asyncQueryWindow(query, desc) {
@@ -69,7 +138,7 @@ module.exports = function (steward) {
         return (await WindowsOnPromise(chrome.windows.getAll)).filter(win => {
             if (win.id === current) return false;
             const tab = win.tabs.filter(tab => tab.active).pop();
-            return steward.util.matchText(query, `${tab.title}${tab.url}`)
+            return MatchQuery(query)(tab);
         }).map(win => {
             const tab = win.tabs.filter(tab => tab.active).pop();
             return {
@@ -96,18 +165,16 @@ module.exports = function (steward) {
         const tabs = await asyncQueryTab(query, tab => tab.windowId !== current);
         // default: attach all
         let results = COMMAND_ATTACH.default;
-        tabs.forEach(tab => results[0].id.push(tab.id));
+        results[0].id = tabs.reduce((memo, tab) => {
+            memo.push(tab.id)
+            return memo;
+        }, []);
         // attach window
         winResults.forEach(r => {
-            r.windowId = r.id;
-            r.id = [];
-        });
-        tabs.forEach(
-            tab => winResults.filter(r => r.windowId === tab.windowId).forEach(
-                r => r.id.push(tab.id)
-            )
-        );
-        winResults.forEach(r => {
+            r.id = tabs.filter(tab => tab.windowId === r.id).reduce((memo, tab) => {
+                memo.push(tab.id)
+                return memo;
+            }, []);
             r.title += ` [ +${r.id.length - 1} 个标签页]`;
         });
         results = results.concat(winResults.filter(r => r.id.length > 1));
@@ -132,9 +199,13 @@ module.exports = function (steward) {
     }
 
     async function asyncOnFocusInput(query) {
-        const activeTabID = (await WindowsOnPromise(chrome.windows.getCurrent)).tabs.filter(tab => tab.active).pop().id;
-        const filter = tab => tab.id !== activeTabID;
+        const filter = tab => !tab.active;
         return FormatData(await asyncQueryTab(query, filter), COMMAND_FOCUS);
+    }
+
+    async function asyncOnHighlightInput(query) {
+        const filter = tab => !tab.highlighted;
+        return FormatData(await asyncQueryTabInWindow(query, filter), COMMAND_HIGHLIGHT);
     }
 
     function onAttach(item) {
@@ -154,84 +225,44 @@ module.exports = function (steward) {
             (await WindowsOnPromise(chrome.windows.getCurrent)).tabs.filter(tab => tab.highlighted && tab.id >= 0).forEach(tab => {
                 chrome.tabs.move(
                     tab.id,
-                    { windowId: item.id, index: item.tabIndex++ },
+                    { windowId: item.id, index: item.tabIndex + 1 },
                     console.log
                 );
                 UpdateTab(tab.id, { active: true }, item.id);
-                steward.app.refresh();
             })
         }
         if (item.id) {
             asyncMoveTabs();
             return;
         }
-        chrome.windows.create(null, window => {
+        chrome.windows.create(null, async function (window) {
             const holder = window.tabs[0].id;
             item.id = window.id;
             item.tabIndex = 0;
-            asyncMoveTabs();
+            await asyncMoveTabs();
             chrome.tabs.remove(holder);
         });
     }
 
     function onFocus(item) {
         UpdateTab(item.id, { active: true }, item.raw.windowId);
-        steward.app.refresh();
     }
 
-    // CONSTANTS
-    const VERSION = 1;
-    const AUTHOR = 'WayneFerdon';
-    const PLUGIN_NAME = 'Tab Pro';
-    const PLUGIN_TYPE = 'keyword';
-    const PLUGIN_CATEGORY = 'browser';
-    // const PLUGIN_ICON = 'https://i.imgur.com/QcoukjA.png';
-    const PLUGIN_ICON = './iconfont/tab.svg';
-    const COMMAND_ATTACH = {
-        key: KEY_ATTACH,
-        type: PLUGIN_TYPE,
-        title: TITLE_ATTACH,
-        subtitle: SUBTITLE_ATTACH,
-        icon: PLUGIN_ICON,
-        onEnter: onAttach,
-        onInput: asyncOnAttachInput,
-        default: [
-            {
-                key: KEY_ATTACH,
-                icon: PLUGIN_ICON,
-                title: TITLE_ATTACH_ALL,
-                desc: SUBTITLE_ATTACH_ALL,
-                id: [],
-            }
-        ]
+    function onHighlight(item) {
+        chrome.windows.getCurrent({ populate: true }, window => {
+            const tabs = window.tabs;
+            const tab = tabs.filter(tab => tab.id === item.id);
+            const active = tabs.filter(tab => tab.active);
+            const highlighted = tabs.filter(tab => !tab.active && tab.highlighted);
+            const indexArray = active.concat(highlighted).concat(tab).reduce((memo, tab) => {
+                memo.push(tabs.indexOf(tab));
+                return memo;
+            }, []);
+            chrome.tabs.highlight({ tabs: indexArray, windowId: window.id });
+            steward.app.refresh();
+        })
     }
-    const COMMAND_DETACH = {
-        key: KEY_DETACH,
-        type: PLUGIN_TYPE,
-        title: TITLE_DETACH,
-        subtitle: SUBTITLE_DETACH,
-        icon: PLUGIN_ICON,
-        onEnter: onDetach,
-        onInput: asyncOnDetachInput,
-        default: [
-            {
-                key: KEY_DETACH,
-                icon: PLUGIN_ICON,
-                title: TITLE_DETACH_TO_NEW,
-                desc: SUBTITLE_DETACH_TO_NEW
-            }
-        ]
-    }
-    const COMMAND_FOCUS = {
-        key: KEY_FOCUS,
-        type: PLUGIN_TYPE,
-        title: TITLE_FOCUS,
-        subtitle: SUBTITLE_FOCUS,
-        icon: PLUGIN_ICON,
-        onEnter: onFocus,
-        onInput: asyncOnFocusInput
-    }
-
+    //#endregion -------Plugin Core Functions--------
     return {
         author: AUTHOR,
         version: VERSION,
@@ -239,7 +270,7 @@ module.exports = function (steward) {
         category: PLUGIN_CATEGORY,
         icon: PLUGIN_ICON,
         title: TITLE,
-        commands: [COMMAND_ATTACH, COMMAND_DETACH, COMMAND_FOCUS],
+        commands: [COMMAND_ATTACH, COMMAND_DETACH, COMMAND_FOCUS, COMMAND_HIGHLIGHT],
         onInput: (query, command) => { return command.onInput(query) },
         onEnter: (item, command, query, { shiftKey }, list) => command.onEnter(item)
     };
